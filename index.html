@@ -133,6 +133,7 @@
       margin: 0 0 20px;
       position: relative;
       max-width: 820px;
+color: var(--mvs-light-blue);
     }
 
     .byp-hero-title em {
@@ -789,7 +790,7 @@
        ============================================================ -->
   <section class="byp-hero">
     <p class="byp-hero-eyebrow">Build Your Path</p>
-    <h1 class="byp-hero-title">What will <em>they</em> become?</h1>
+    <h1 class="byp-hero-title">Who will your child <em>become</em> at MVS?</h1>
     <p class="byp-hero-sub">
       Tell us what lights your child up. We'll show you how that interest can grow,
       stretch, and surprise them at MVS.
@@ -823,15 +824,13 @@
 
     <div class="byp-step">
       <div class="byp-step-num">Step 02</div>
-      <h2 class="byp-step-label">What lights them up?</h2>
+      <h2 class="byp-step-label">Describe what lights your child up.</h2>
       <p class="byp-helper" style="margin-top: -10px; margin-bottom: 16px; font-style: normal;">
-        Tap as many as you'd like.
       </p>
       <div class="byp-chips" id="byp-chips">
         <!-- Chips injected by JS -->
       </div>
       <div class="byp-field" style="margin-top: 8px;">
-        <label for="byp-freetext">Anything else? <span style="color: var(--mvs-ink-soft); font-weight: 400;">(optional)</span></label>
         <textarea
           id="byp-freetext"
           class="byp-textarea"
@@ -841,8 +840,7 @@
 
     <div class="byp-cta-row">
       <button class="byp-button" id="byp-submit">
-        <span>Discover Their Path</span>
-        <span class="byp-button-arrow">→</span>
+        <span>Click Here to Discover Their MVS Path</span>
       </button>
       <button class="byp-button-secondary" id="byp-reset" style="display: none;">Start Over</button>
       <div class="byp-error" id="byp-error"></div>
@@ -878,7 +876,7 @@
           <p class="byp-lead-eyebrow">Take The Next Step</p>
           <h3 class="byp-lead-title">Want to talk this through with someone?</h3>
           <p class="byp-lead-sub">
-            Send this path to our admissions team and we'll reach out within one business day. No pressure — just answers, perspective, or a campus visit if you want one.
+            Send this path to our admissions team and we'll get in touch. No pressure — just answers, perspective, or a campus visit if you want one.
           </p>
         </div>
 
@@ -914,9 +912,9 @@
         <div class="byp-lead-cta">
           <button class="byp-button" id="byp-lead-submit">
             <span>Send My Path</span>
-            <span class="byp-button-arrow">→</span>
+            <span class="byp-button-arrow">?</span>
           </button>
-          <a href="https://www.mvschool.com/admissions/visit" class="byp-lead-alt">Or schedule a visit instead →</a>
+          <a href="https://www.mvschool.com/admissions/visit" class="byp-lead-alt">Or schedule a visit instead ?</a>
         </div>
         <div class="byp-error" id="byp-lead-error"></div>
       </div>
@@ -966,22 +964,47 @@
       division: ['upper'],
       category: 'Signature MVS Programs',
       signature: true,
-      blurb: 'Each spring, Upper School students leave the regular schedule behind for three weeks of focused immersion in a single subject — locally, nationally, or abroad.',
+      blurb: 'Each January, upper school students leave the regular schedule behind for four weeks of focused immersion in a single subject — locally, nationally, or abroad.',
       tags: ['travel', 'exploration', 'adventure', 'culture', 'languages', 'curious', 'global']
     },
-    'project-period': {
-      name: 'Project Period',
-      division: ['middle', 'upper'],
+    'immersion-term-lower': {
+      name: 'Immersion Term',
+      division: ['lower-early', 'lower'],
       category: 'Signature MVS Programs',
       signature: true,
-      blurb: 'Dedicated time for student-driven, in-depth projects that cut across disciplines. Pursue a question that won\'t leave you alone.',
+      blurb: 'Each January, early childhood and lower school students leave the regular schedule behind for two weeks of focused immersion in a single subject.',
       tags: ['curious', 'independent', 'research', 'creative', 'making', 'inventing', 'self-directed']
     },
+ 'immersion-term-middle': {
+      name: 'Immersion Term',
+      division: ['middle'],
+      category: 'Signature MVS Programs',
+      signature: true,
+      blurb: ''Each January, middle school students leave the regular schedule behind for three weeks of focused immersion in a single subject.',
+      tags: ['curious', 'independent', 'research', 'creative', 'making', 'inventing', 'self-directed' 'travel', 'exploration', 'adventure', 'culture', 'languages', 'curious', 'global']
+    },
+ 'aries-project': {
+      name: 'Aries Project',
+      division: ['upper'],
+      category: 'Signature MVS Programs',
+      signature: true,
+      blurb: ''The Aries Project is The Miami Valley School’s capstone research experience, undertaken by all seniors. Students create a research question, read deeply in their subject, conduct original fieldwork, and work with an outside expert as well as a faculty mentor. The result is the MVS version of an undergraduate college thesis.',
+      tags: ['curious', 'independent', 'research', 'creative', 'making', 'inventing', 'self-directed']
+    },
+ 'college-counseling': {
+      name: 'College Counseling',
+      division: ['middle', 'upper' ],
+      category: 'Signature MVS Programs',
+      signature: true,
+      blurb: ''Comprehensive college counseling at MVS is personalized for every student, dedicated to helping your child find their best fit after graduation.',
+      tags: ['curious', 'independent', 'research', 'college', 'academics', 'self-directed', 'travel', 'exploration', 'adventure', 'culture', 'languages', 'curious', 'global']
+    },
+
 
     // -- VISUAL ARTS -----------------------------------------------------------
     'studio-art': {
       name: 'Studio Art',
-      division: ['middle', 'upper'],
+      division: ['middle'],
       category: 'Visual Arts',
       blurb: 'Painting, drawing, mixed media. Students build a portfolio while learning to see — and translate what they see.',
       tags: ['art', 'drawing', 'painting', 'visual', 'creative', 'making']
@@ -992,13 +1015,6 @@
       category: 'Visual Arts',
       blurb: 'Hand-building, wheel work, and three-dimensional design. Patience, problem-solving, and a little mess.',
       tags: ['art', 'sculpture', 'ceramics', 'making', 'hands-on', 'creative', 'design']
-    },
-    'digital-arts': {
-      name: 'Digital Arts & Design',
-      division: ['upper'],
-      category: 'Visual Arts',
-      blurb: 'Graphic design, photography, and digital illustration using industry-standard tools.',
-      tags: ['art', 'design', 'digital', 'photography', 'graphic-design', 'creative', 'computers']
     },
     'lower-art-studio': {
       name: 'Lower School Art Studio',
@@ -1011,9 +1027,16 @@
     // -- PERFORMING ARTS -------------------------------------------------------
     'theater': {
       name: 'Theater Productions',
-      division: ['middle', 'upper'],
+      division: ['upper'],
       category: 'Performing Arts',
       blurb: 'Fall play, spring musical, and student-directed one-acts. Roles on stage, behind the scenes, and in the booth.',
+      tags: ['theater', 'drama', 'performance', 'acting', 'musical', 'creative', 'expressive']
+    },
+  'theater-middle': {
+      name: 'Theater Productions',
+      division: ['middle', 'upper'],
+      category: 'Performing Arts',
+      blurb: 'Theater productions each winter. Roles on stage, behind the scenes, and in the booth.',
       tags: ['theater', 'drama', 'performance', 'acting', 'musical', 'creative', 'expressive']
     },
     'lower-drama': {
@@ -1589,7 +1612,7 @@
     document.getElementById('byp-lead-error').classList.remove('visible');
     const leadBtn = document.getElementById('byp-lead-submit');
     leadBtn.disabled = false;
-    leadBtn.innerHTML = '<span>Send My Path</span><span class="byp-button-arrow">→</span>';
+    leadBtn.innerHTML = '<span>Send My Path</span><span class="byp-button-arrow">?</span>';
     lastResults = [];
     lastNarrative = [];
 
@@ -1766,36 +1789,6 @@
   // INIT
   // ============================================================================
   renderChips();
-
-  // ============================================================================
-  // IFRAME AUTO-RESIZE
-  // ----------------------------------------------------------------------------
-  // When this widget is loaded inside an iframe, post the document's current
-  // height to the parent window whenever the content changes. The parent page
-  // listens for these messages and resizes the iframe accordingly. See the
-  // embed snippet in the project README for the parent-side listener code.
-  //
-  // Using '*' as the target origin is safe here since height is non-sensitive.
-  // Lock it down to your domain (e.g. 'https://www.mvschool.com') if you want
-  // to be strict about it.
-  // ============================================================================
-  function postHeight() {
-    if (window.parent === window) return; // Not in an iframe; do nothing
-    const height = document.documentElement.scrollHeight;
-    window.parent.postMessage({ type: 'mvs-byp-height', height: height }, '*');
-  }
-
-  if (typeof ResizeObserver !== 'undefined') {
-    const ro = new ResizeObserver(postHeight);
-    ro.observe(document.documentElement);
-  } else {
-    // Fallback for older browsers: poll every 500ms
-    setInterval(postHeight, 500);
-  }
-  // Initial post + one after fonts load (Fraunces shifts layout slightly)
-  postHeight();
-  if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(postHeight);
-  }
 })();
 </script>
+
