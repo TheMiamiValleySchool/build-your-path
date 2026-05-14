@@ -1,30 +1,34 @@
 <!--
   ============================================================================
-  MVS "BUILD YOUR PATH" INTERACTIVE WIDGET
+  MVS "BUILD YOUR PATH" INTERACTIVE WIDGET — UPPER SCHOOL EDITION
   ============================================================================
 
   PURPOSE:
   Interactive tool that lets prospective families tell us what their child
   loves, then surfaces MVS programs, classes, and activities that match.
 
-  HOW TO EMBED ON BLACKBAUD:
-  1. Drop this entire file's contents into a "Content Editor" or "Custom Code"
-     content block on any page.
-  2. Or paste into an iframe: <iframe src="path/to/this.html" ...>
-
   PRODUCTION NOTES:
   - All CSS is scoped under #mvs-build-your-path to prevent conflicts with
     the rest of the site's styles.
-  - The widget runs entirely in the browser. No backend needed.
-  - The optional Claude API call enhances the narrative copy. If you want
-    that to work on the live site, you'll need a server-side proxy that
-    holds the API key (Anthropic does not allow client-side key exposure).
-    Without it, the widget falls back to templated copy and still works.
+  - The widget runs entirely in the browser.
+  - The optional Claude API call enhances the narrative copy. To activate
+    in production, set up a server-side proxy that holds the API key.
+    Without one, the widget falls back to templated copy and still works.
 
   EDITING THE PROGRAMS DATABASE:
-  Scroll to the MVS_PROGRAMS constant. Each program is keyed by ID and has
-  name, division, category, blurb, and interest tags. Add, remove, or edit
-  freely - the matching logic adapts automatically.
+  Scroll to the MVS_PROGRAMS constant. Each program has name, division,
+  category, blurb, and interest tags. Add, remove, or edit freely — the
+  matching logic adapts automatically.
+
+  LEAD CAPTURE:
+  Set LEAD_CONFIG.endpoint near the bottom of the script to your webhook
+  URL (Zapier, Make, Formspree, custom backend). Leave as null to fall
+  back to mailto: behavior.
+
+  IFRAME EMBEDDING:
+  This file is iframe-ready. Drop into the iframe snippet documented
+  separately. The widget reports its height to the parent for auto-resize
+  and asks the parent to scroll on its behalf for cross-frame UX.
   ============================================================================
 -->
 
@@ -36,8 +40,6 @@
   <style>
     /* =========================================================
        SCOPED RESET + BASE
-       Everything inside #mvs-build-your-path is isolated from
-       the parent site's CSS.
        ========================================================= */
     #mvs-build-your-path,
     #mvs-build-your-path *,
@@ -47,7 +49,6 @@
     }
 
     #mvs-build-your-path {
-      /* MVS Brand Colors */
       --mvs-navy: #003B5C;
       --mvs-navy-deep: #002940;
       --mvs-red: #BA0C2F;
@@ -58,7 +59,6 @@
       --mvs-ink-soft: #4a4a4a;
       --mvs-rule: #E5E1DA;
 
-      /* Type */
       --mvs-display: 'Fraunces', 'Sentinel', Georgia, serif;
       --mvs-sans: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 
@@ -93,60 +93,42 @@
        HERO
        ========================================================= */
     .byp-hero {
-      background: var(--mvs-navy);
-      background-image:
-        radial-gradient(ellipse at top right, rgba(106, 209, 227, 0.18), transparent 60%),
-        radial-gradient(ellipse at bottom left, rgba(186, 12, 47, 0.12), transparent 55%);
-      color: white;
-      padding: 64px 48px 72px;
+      background: var(--mvs-paper);
+      padding: 64px 48px 56px;
       position: relative;
-      overflow: hidden;
-    }
-
-    .byp-hero::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-image:
-        repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0 1px, transparent 1px 40px),
-        repeating-linear-gradient(90deg, rgba(255,255,255,0.02) 0 1px, transparent 1px 40px);
-      pointer-events: none;
     }
 
     .byp-hero-eyebrow {
-      font-family: var(--mvs-sans);
       font-size: 11px;
       font-weight: 600;
       letter-spacing: 0.22em;
       text-transform: uppercase;
-      color: var(--mvs-light-blue);
+      color: var(--mvs-red);
       margin: 0 0 18px;
-      position: relative;
     }
 
     .byp-hero-title {
       font-family: var(--mvs-display);
       font-weight: 500;
-      font-size: clamp(38px, 6vw, 64px);
+      font-size: clamp(36px, 5.5vw, 56px);
       line-height: 1.05;
       letter-spacing: -0.02em;
+      color: var(--mvs-navy);
       margin: 0 0 20px;
-      position: relative;
       max-width: 820px;
     }
 
     .byp-hero-title em {
       font-style: italic;
       font-weight: 400;
-      color: var(--mvs-light-blue);
+      color: var(--mvs-red);
     }
 
     .byp-hero-sub {
       font-size: 17px;
-      max-width: 620px;
-      color: rgba(255, 255, 255, 0.82);
+      max-width: 660px;
+      color: var(--mvs-ink-soft);
       margin: 0;
-      position: relative;
       line-height: 1.6;
     }
 
@@ -155,8 +137,7 @@
        ========================================================= */
     .byp-card {
       background: var(--mvs-paper);
-      padding: 48px;
-      position: relative;
+      padding: 0 48px 48px;
     }
 
     .byp-step {
@@ -171,7 +152,6 @@
       display: inline-flex;
       align-items: center;
       gap: 10px;
-      font-family: var(--mvs-sans);
       font-size: 11px;
       font-weight: 700;
       letter-spacing: 0.18em;
@@ -213,7 +193,6 @@
       font-weight: 600;
       color: var(--mvs-ink-soft);
       margin-bottom: 8px;
-      letter-spacing: 0.01em;
     }
 
     .byp-input,
@@ -262,7 +241,6 @@
       color: var(--mvs-ink-soft);
       transition: all 0.18s ease;
       user-select: none;
-      letter-spacing: 0.005em;
       -webkit-appearance: none;
       appearance: none;
     }
@@ -284,9 +262,9 @@
       height: 16px;
       border: 1.5px solid var(--mvs-rule);
       background: white;
+      border-radius: 2px;
       flex-shrink: 0;
       transition: all 0.18s ease;
-      border-radius: 2px;
     }
 
     .byp-chip-indicator svg {
@@ -333,7 +311,6 @@
       resize: vertical;
       min-height: 80px;
       line-height: 1.5;
-      font-family: inherit;
       transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
 
@@ -347,6 +324,15 @@
       font-size: 13px;
       color: var(--mvs-ink-soft);
       margin: 8px 0 0;
+      font-style: italic;
+    }
+
+    .byp-scope-note {
+      font-size: 13px;
+      color: var(--mvs-ink-soft);
+      margin: 22px 0 0;
+      padding-top: 16px;
+      border-top: 1px solid var(--mvs-rule);
       font-style: italic;
     }
 
@@ -373,7 +359,6 @@
       letter-spacing: 0.04em;
       text-transform: uppercase;
       transition: all 0.18s ease;
-      font-family: var(--mvs-sans);
     }
 
     .byp-button:hover:not(:disabled) {
@@ -421,9 +406,7 @@
       animation: bypFadeIn 0.5s ease;
     }
 
-    .byp-results.visible {
-      display: block;
-    }
+    .byp-results.visible { display: block; }
 
     @keyframes bypFadeIn {
       from { opacity: 0; transform: translateY(12px); }
@@ -468,13 +451,11 @@
       margin-bottom: 0;
     }
 
-    /* Grouped sections */
     .byp-section {
       margin-top: 40px;
     }
 
     .byp-section-title {
-      font-family: var(--mvs-sans);
       font-size: 12px;
       font-weight: 700;
       letter-spacing: 0.18em;
@@ -494,7 +475,6 @@
     .byp-program-card {
       background: white;
       padding: 28px;
-      position: relative;
       transition: transform 0.2s ease, box-shadow 0.2s ease;
       border-top: 3px solid var(--mvs-light-blue);
     }
@@ -613,16 +593,8 @@
       background: white;
     }
 
-    .byp-lead .byp-select {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23003B5C' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
-    }
-
     .byp-lead .byp-row {
       margin-bottom: 18px;
-    }
-
-    .byp-lead .byp-field:last-child {
-      margin-bottom: 0;
     }
 
     .byp-lead-cta {
@@ -657,11 +629,8 @@
       border-left-color: var(--mvs-red);
     }
 
-    .byp-lead-form-wrap.hidden {
-      display: none;
-    }
+    .byp-lead-form-wrap.hidden { display: none; }
 
-    /* Success state */
     .byp-lead-success {
       display: none;
       text-align: center;
@@ -669,9 +638,7 @@
       animation: bypFadeIn 0.5s ease;
     }
 
-    .byp-lead-success.visible {
-      display: block;
-    }
+    .byp-lead-success.visible { display: block; }
 
     .byp-lead-success-icon {
       display: inline-flex;
@@ -715,9 +682,7 @@
       background: var(--mvs-cream);
     }
 
-    .byp-loading.visible {
-      display: block;
-    }
+    .byp-loading.visible { display: block; }
 
     .byp-loading-spinner {
       display: inline-block;
@@ -749,7 +714,6 @@
       margin: 0;
     }
 
-    /* Error inline */
     .byp-error {
       display: none;
       padding: 14px 18px;
@@ -764,21 +728,14 @@
 
     /* Responsive */
     @media (max-width: 640px) {
-      .byp-hero { padding: 44px 24px 52px; }
-      .byp-card { padding: 32px 24px; }
+      .byp-hero { padding: 44px 24px 36px; }
+      .byp-card { padding: 0 24px 32px; }
       .byp-results { padding: 40px 24px; }
       .byp-loading { padding: 60px 24px; }
       .byp-lead { padding: 36px 24px; }
-      .byp-lead-cta {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 18px;
-      }
+      .byp-lead-cta { flex-direction: column; align-items: stretch; gap: 18px; }
       .byp-lead-alt { text-align: center; }
-      .byp-cta-row {
-        flex-direction: column;
-        align-items: stretch;
-      }
+      .byp-cta-row { flex-direction: column; align-items: stretch; }
       .byp-button { justify-content: center; }
       .byp-button-secondary { text-align: center; }
     }
@@ -788,12 +745,9 @@
        HERO
        ============================================================ -->
   <section class="byp-hero">
-    <p class="byp-hero-eyebrow">Build Your Path</p>
-    <h1 class="byp-hero-title">Who will they <em>become</em> at MVS?</h1>
-    <p class="byp-hero-sub">
-      Tell us what lights your child up. We'll show you how that interest can grow,
-      stretch, and surprise them at MVS.
-    </p>
+    <p class="byp-hero-eyebrow">Build Your Path · Upper School</p>
+    <h1 class="byp-hero-title">Who will your child <em>become</em> at MVS?</h1>
+    <p class="byp-hero-sub">Tell us what lights your child up. We'll search through our course catalog, athletics, and signature programs to show you how that interest will grow in the MVS Upper School.</p>
   </section>
 
   <!-- ============================================================
@@ -812,9 +766,6 @@
           <label for="byp-grade">Entering grade</label>
           <select id="byp-grade" class="byp-select">
             <option value="">Select a grade...</option>
-            <option value="lower-early">Pre-K through Kindergarten</option>
-            <option value="lower">1st through 5th Grade</option>
-            <option value="middle">6th through 8th Grade</option>
             <option value="upper">9th through 12th Grade</option>
           </select>
         </div>
@@ -837,6 +788,7 @@
           class="byp-textarea"
           placeholder="e.g. loves taking things apart, asks endless questions about animals, won't put down their sketchbook..."></textarea>
       </div>
+      <p class="byp-scope-note">Showing courses, programs, and electives from the Upper School (grades 9–12).</p>
     </div>
 
     <div class="byp-cta-row">
@@ -878,7 +830,7 @@
           <p class="byp-lead-eyebrow">Take The Next Step</p>
           <h3 class="byp-lead-title">Want to talk this through with someone?</h3>
           <p class="byp-lead-sub">
-            Send this path to our admissions team and we'll reach out within one business day. No pressure — just answers, perspective, or a campus visit if you want one.
+            Send this path to our admissions team and we'll reach out shortly. No pressure — just answers, perspective, or a campus visit if you want one.
           </p>
         </div>
 
@@ -916,7 +868,7 @@
             <span>Send My Path</span>
             <span class="byp-button-arrow">→</span>
           </button>
-          <a href="https://www.mvschool.com/admissions/visit" class="byp-lead-alt">Or schedule a visit instead →</a>
+          <a href="https://mvschool.myschoolapp.com/app/embed?svcid=edu#inquiry/45597" class="byp-lead-alt">Or inquire directly →</a>
         </div>
         <div class="byp-error" id="byp-lead-error"></div>
       </div>
@@ -928,7 +880,7 @@
           </svg>
         </div>
         <h3 class="byp-lead-success-title">Got it. Talk soon.</h3>
-        <p class="byp-lead-success-sub">Your path is on its way to our admissions team. Watch for a response within one business day.</p>
+        <p class="byp-lead-success-sub">Your path is on its way to our admissions team. Watch for a response shortly.</p>
       </div>
     </div>
   </section>
@@ -941,266 +893,579 @@
   // ============================================================================
   // MVS PROGRAMS DATABASE
   // ----------------------------------------------------------------------------
-  // EDIT THIS to match MVS's actual current offerings. Each entry needs:
+  // Each program has:
   //   - name:       Program/activity name
-  //   - division:   'lower-early' | 'lower' | 'middle' | 'upper' | array of these
+  //   - division:   Grade band(s) it serves
   //   - category:   Group label shown in results
   //   - signature:  true for MVS-distinctive programs (gets red accent)
   //   - blurb:      1-2 sentence description
-  //   - tags:       Interest keywords for matching (lowercase, comma-free)
-  //
-  // The matching engine scores programs by tag overlap. Add new tags freely.
+  //   - tags:       Interest keywords for matching
   // ============================================================================
   const MVS_PROGRAMS = {
-    // -- SIGNATURE PROGRAMS (cross-divisional, MVS-distinctive) ----------------
-    'immersion-method': {
-      name: 'The MVS Immersion Method',
-      division: ['lower-early', 'lower', 'middle', 'upper'],
+    // -- SIGNATURE PROGRAMS ----------------------------------------------------
+    'aries': {
+      name: 'The Aries Capstone',
+      division: ['upper'],
       category: 'Signature MVS Programs',
       signature: true,
-      blurb: 'Our hands-on, experience-first approach to learning. Students build, test, perform, and create from day one — no matter the subject.',
-      tags: ['hands-on', 'experiential', 'learning', 'curious', 'making', 'building', 'creative']
+      meta: 'Junior & Senior Year',
+      blurb: 'Every MVS student designs and pursues a self-directed research and creation project across their final years. Topics span the sciences, arts, social sciences, and beyond — culminating in a formal capstone.',
+      tags: ['writing', 'research', 'science', 'art', 'coding', 'math', 'leadership', 'debate', 'building', 'curious', 'independent', 'creative', 'making']
     },
     'immersion-term': {
       name: 'Immersion Term',
       division: ['upper'],
       category: 'Signature MVS Programs',
       signature: true,
-      blurb: 'Each spring, Upper School students leave the regular schedule behind for three weeks of focused immersion in a single subject — locally, nationally, or abroad.',
-      tags: ['travel', 'exploration', 'adventure', 'culture', 'languages', 'curious', 'global']
+      meta: 'Annual · Four Weeks',
+      blurb: 'Dive deeply into one area of interest for four weeks. Travel locally, domestically, and internationally. Opportunity to create your own independent study.',
+      tags: ['writing', 'science', 'art', 'coding', 'math', 'leadership', 'building', 'debate', 'travel', 'languages', 'culture', 'global', 'curious', 'exploration']
     },
-    'project-period': {
-      name: 'Project Period',
-      division: ['middle', 'upper'],
+    'z-lab': {
+      name: 'Zorniger Environmental Laboratory',
+      division: ['upper'],
       category: 'Signature MVS Programs',
       signature: true,
-      blurb: 'Dedicated time for student-driven, in-depth projects that cut across disciplines. Pursue a question that won\'t leave you alone.',
-      tags: ['curious', 'independent', 'research', 'creative', 'making', 'inventing', 'self-directed']
+      meta: 'Year-round Environmental Hub',
+      blurb: 'The MVS Z-Lab is more than a school greenhouse and garden: it\'s a multidisciplinary learning center where students plan, dream, nurture, experiment, solve problems, build relationships, and grow ideas for a more sustainable future.',
+      tags: ['science', 'outdoors', 'nature', 'environment', 'plants', 'sustainability', 'curious', 'hands-on']
     },
 
-    // -- VISUAL ARTS -----------------------------------------------------------
-    'studio-art': {
-      name: 'Studio Art',
-      division: ['middle', 'upper'],
-      category: 'Visual Arts',
-      blurb: 'Painting, drawing, mixed media. Students build a portfolio while learning to see — and translate what they see.',
-      tags: ['art', 'drawing', 'painting', 'visual', 'creative', 'making']
+    // -- ENGLISH ---------------------------------------------------------------
+    'core-english': {
+      name: 'The Core English Sequence',
+      division: ['upper'],
+      category: 'English',
+      meta: '9th–12th Grade · Year-long',
+      blurb: 'Four years of literature and writing: The Art of the Essay, World Literature, American Authors, and Topics in Senior English. Embedded Honors available at every level.',
+      tags: ['writing', 'reading', 'literature']
+    },
+    'women-writers': {
+      name: 'Women Writers',
+      division: ['upper'],
+      category: 'English',
+      meta: 'Elective · Fall Term',
+      blurb: 'Female voices across genres, time periods, and cultures — from Emily Dickinson and Sylvia Plath to Alice Walker and Liz Prince\'s graphic memoir.',
+      tags: ['writing', 'reading', 'literature', 'poetry']
+    },
+    'bradbury': {
+      name: 'Something Wicked: Ray Bradbury',
+      division: ['upper'],
+      category: 'English',
+      meta: 'Elective · Spring Term',
+      blurb: 'A semester deep-dive on one of the 20th century\'s most prescient storytellers. Students design a Bradbury-inspired mystery game as their final project.',
+      tags: ['writing', 'reading', 'literature', 'creative']
+    },
+    'shakespeare': {
+      name: 'Shakespeare: Not of an Age but for All Time',
+      division: ['upper'],
+      category: 'English',
+      meta: 'Elective · Spring Term',
+      blurb: 'Not just the plays — how Shakespeare became Shakespeare. Students examine what gives an author authority and how adaptation transforms meaning.',
+      tags: ['writing', 'reading', 'literature', 'theater']
+    },
+    'writing-lab': {
+      name: 'Writing Lab',
+      division: ['upper'],
+      category: 'English',
+      meta: 'Elective · Fall Term',
+      blurb: 'Bring writing assignments from any class to workshop. Daily mini-lessons cover grammar, cover letters, college essays, and standardized test writing.',
+      tags: ['writing', 'reading']
+    },
+
+    // -- VISUAL ART ------------------------------------------------------------
+    'design-foundations': {
+      name: 'Design Foundations',
+      division: ['upper'],
+      category: 'Visual Art',
+      meta: 'Fall or Spring Term',
+      blurb: 'The gateway studio course. Students explore composition, line, form, and craftsmanship across many media — and learn to articulate why small choices matter.',
+      tags: ['art', 'design', 'visual', 'creative']
+    },
+    'painting': {
+      name: 'Painting',
+      division: ['upper'],
+      category: 'Visual Art',
+      meta: 'Fall Term',
+      blurb: 'Students work alongside the painters of the 19th, 20th, and 21st centuries — solo, collaboratively, and in pursuit of their own personal vision.',
+      tags: ['art', 'painting', 'visual', 'creative']
+    },
+    'drawing': {
+      name: 'Drawing',
+      division: ['upper'],
+      category: 'Visual Art',
+      meta: 'Spring Term',
+      blurb: 'The foundation of every visual art. Students explore process, material, and the historical and philosophical perspectives that shape what a drawing can be.',
+      tags: ['art', 'drawing', 'visual', 'creative']
+    },
+    'printmaking': {
+      name: 'Printmaking',
+      division: ['upper'],
+      category: 'Visual Art',
+      meta: 'Fall Term',
+      blurb: 'Relief, intaglio, and monotype. Students learn the tools and language of printmaking while exploring its long historical and cultural context.',
+      tags: ['art', 'visual', 'creative', 'making']
     },
     'ceramics': {
-      name: 'Ceramics & Sculpture',
-      division: ['middle', 'upper'],
-      category: 'Visual Arts',
-      blurb: 'Hand-building, wheel work, and three-dimensional design. Patience, problem-solving, and a little mess.',
-      tags: ['art', 'sculpture', 'ceramics', 'making', 'hands-on', 'creative', 'design']
-    },
-    'digital-arts': {
-      name: 'Digital Arts & Design',
+      name: 'Ceramics',
       division: ['upper'],
-      category: 'Visual Arts',
-      blurb: 'Graphic design, photography, and digital illustration using industry-standard tools.',
-      tags: ['art', 'design', 'digital', 'photography', 'graphic-design', 'creative', 'computers']
+      category: 'Visual Art',
+      meta: 'Fall & Spring Term',
+      blurb: 'Hand-building, wheel-throwing, and finishing both functional and sculptural objects. Patience, problem-solving, and a little mess. Repeatable at advanced level.',
+      tags: ['art', 'ceramics', 'making', 'building', 'hands-on', 'creative']
     },
-    'lower-art-studio': {
-      name: 'Lower School Art Studio',
-      division: ['lower-early', 'lower'],
-      category: 'Visual Arts',
-      blurb: 'Weekly studio time where children explore color, line, texture, and form across many media.',
-      tags: ['art', 'drawing', 'painting', 'creative', 'making', 'hands-on']
+    'sculpture': {
+      name: 'Sculpture',
+      division: ['upper'],
+      category: 'Visual Art',
+      meta: 'Spring Term',
+      blurb: 'Carving, casting, and building with clay, wire, cardboard, plaster, and wood. Conventional and unconventional materials both welcome.',
+      tags: ['art', 'sculpture', 'making', 'building', 'hands-on', 'creative']
     },
 
     // -- PERFORMING ARTS -------------------------------------------------------
-    'theater': {
-      name: 'Theater Productions',
-      division: ['middle', 'upper'],
+    'performing-arts-class': {
+      name: 'Performing Arts Class',
+      division: ['upper'],
       category: 'Performing Arts',
-      blurb: 'Fall play, spring musical, and student-directed one-acts. Roles on stage, behind the scenes, and in the booth.',
-      tags: ['theater', 'drama', 'performance', 'acting', 'musical', 'creative', 'expressive']
+      meta: 'Fall or Spring · Required',
+      blurb: 'Scene work, vocal performance, and dance. Every student takes the stage. Class culminates in a public performance — jazz and tap shoes required.',
+      tags: ['theater', 'drama', 'performance', 'music', 'singing', 'expressive']
     },
-    'lower-drama': {
-      name: 'Drama & Storytelling',
-      division: ['lower'],
+    'productions': {
+      name: 'Performing Arts Productions',
+      division: ['upper'],
       category: 'Performing Arts',
-      blurb: 'Performance-based storytelling that builds confidence, voice, and stage presence.',
-      tags: ['theater', 'drama', 'performance', 'storytelling', 'expressive', 'creative']
+      meta: 'Fall and Spring',
+      blurb: 'Take the stage in the upper school fall play and upper school spring musical.',
+      tags: ['theater', 'drama', 'performance', 'acting', 'musical', 'expressive']
+    },
+    'jazz': {
+      name: 'Jazz Ensemble',
+      division: ['upper'],
+      category: 'Performing Arts',
+      meta: 'Year-long · Daily 7:20 AM',
+      blurb: 'Blues, Latin, rock, funk, bop, swing. Four formal performances a year, plus other appearances. Audition required.',
+      tags: ['music', 'instruments', 'performance', 'band']
+    },
+    'strings': {
+      name: 'String Ensemble',
+      division: ['upper'],
+      category: 'Performing Arts',
+      meta: 'Year-long · Daily 7:20 AM',
+      blurb: 'MVS\'s only Upper School string group, for intermediate to advanced players. Group blend, alternative styles, and concert performance.',
+      tags: ['music', 'instruments', 'performance', 'orchestra']
     },
     'choir': {
-      name: 'Choir & Vocal Ensemble',
-      division: ['middle', 'upper'],
+      name: 'Choir',
+      division: ['upper'],
       category: 'Performing Arts',
-      blurb: 'A cappella, classical, and contemporary vocal performance. Concerts each season.',
-      tags: ['music', 'singing', 'performance', 'choir', 'expressive']
+      meta: 'Year-long · Daily 7:20 AM',
+      blurb: 'A performance-based ensemble building healthy vocal technique, music literacy, and the kind of trust that only collective artistry creates.',
+      tags: ['music', 'singing', 'performance', 'choir']
     },
-    'instrumental-music': {
-      name: 'Instrumental Music',
-      division: ['middle', 'upper'],
+    'music-theory': {
+      name: 'Fundamentals of Music Theory',
+      division: ['upper'],
       category: 'Performing Arts',
-      blurb: 'Strings, winds, and percussion. Small ensembles and full performance opportunities.',
-      tags: ['music', 'instruments', 'performance', 'band', 'orchestra']
+      meta: 'Fall Term',
+      blurb: 'Melody, rhythm, chord theory, scales, intervals, and notation. The toolkit behind every other music class.',
+      tags: ['music', 'theory']
+    },
+    'theater-design': {
+      name: 'Theater Design and Production',
+      division: ['upper'],
+      category: 'Performing Arts',
+      meta: 'Spring Term',
+      blurb: 'Students serve as adjunct creative staff for an MVS mainstage production: building sets, designing costumes, running tech. Real production credit.',
+      tags: ['theater', 'building', 'art', 'making', 'design']
+    },
+    'guitar': {
+      name: 'Guitar Studio & Ensemble',
+      division: ['upper'],
+      category: 'Performing Arts',
+      meta: 'Spring Term',
+      blurb: 'Open to all skill levels. Class time splits between group lessons, 1-on-1 work, and individual practice. Bring your own guitar.',
+      tags: ['music', 'instruments', 'guitar']
     },
 
-    // -- STEM / DISCOVERY ------------------------------------------------------
-    'robotics': {
-      name: 'Robotics & Engineering',
-      division: ['middle', 'upper'],
-      category: 'STEM & Discovery',
-      blurb: 'Design, build, and program robots for competition and exploration. Learn to fail fast and iterate.',
-      tags: ['robotics', 'engineering', 'building', 'making', 'computers', 'coding', 'inventing', 'taking-apart']
-    },
-    'computer-science': {
-      name: 'Computer Science',
+    // -- SOCIAL SCIENCES -------------------------------------------------------
+    'world-civ': {
+      name: 'World Civilizations',
       division: ['upper'],
-      category: 'STEM & Discovery',
-      blurb: 'From foundations to advanced topics — algorithmic thinking, software design, and real applications.',
-      tags: ['coding', 'computers', 'programming', 'logic', 'math', 'problem-solving']
+      category: 'Social Sciences',
+      meta: '9th Grade · Year-long',
+      blurb: 'A survey of human civilization from early state-building to the 21st century, with priority on historical thinking over memorization.',
+      tags: ['writing', 'debate', 'history', 'reading']
     },
-    'science-research': {
-      name: 'Science Research',
+    'us-history': {
+      name: 'U.S. History',
       division: ['upper'],
-      category: 'STEM & Discovery',
-      blurb: 'Independent research with a faculty mentor. Bench work, fieldwork, and presentation at regional events.',
-      tags: ['science', 'research', 'experiments', 'curious', 'biology', 'chemistry', 'physics']
+      category: 'Social Sciences',
+      meta: '10th Grade · Year-long',
+      blurb: 'America\'s story told with attention to perspectives traditionally left out of it. Heavy emphasis on argumentation, source evaluation, and writing.',
+      tags: ['writing', 'debate', 'history', 'reading']
     },
-    'lower-science': {
-      name: 'Discovery Science',
-      division: ['lower-early', 'lower'],
-      category: 'STEM & Discovery',
-      blurb: 'Hands-on investigation in our science lab and outdoor classroom. Live animals, real tools, real questions.',
-      tags: ['science', 'animals', 'nature', 'experiments', 'curious', 'taking-apart', 'asking-questions']
+    'us-gov': {
+      name: 'U.S. Government and Politics',
+      division: ['upper'],
+      category: 'Social Sciences',
+      meta: 'Fall or Spring Term',
+      blurb: 'Foundational documents, landmark cases, role-based simulations, and a civic action project that connects classroom learning to real public issues.',
+      tags: ['debate', 'politics', 'leadership', 'speaking']
     },
-    'math-team': {
-      name: 'Math Team',
-      division: ['middle', 'upper'],
-      category: 'STEM & Discovery',
-      blurb: 'Competition math for students who like a hard problem more than a familiar one.',
-      tags: ['math', 'puzzles', 'logic', 'problem-solving', 'competition']
+    'adv-europe': {
+      name: 'Advanced Europe in a Global Context',
+      division: ['upper'],
+      category: 'Social Sciences',
+      meta: 'Advanced · Year-long',
+      blurb: 'An advanced study of modernity — Renaissance through the postmodern era — and how interconnected our globalized world really is.',
+      tags: ['writing', 'debate', 'history', 'reading', 'global']
+    },
+    'midterm-elections': {
+      name: 'Advanced Seminar: Midterm Elections',
+      division: ['upper'],
+      category: 'Social Sciences',
+      meta: 'Advanced · Fall Term',
+      blurb: 'Track real campaigns as they unfold. Students volunteer for campaigns, attend events, interview staffers, then analyze outcomes after Election Day.',
+      tags: ['debate', 'politics', 'leadership', 'speaking']
+    },
+    'research-principles': {
+      name: 'Principles of Research',
+      division: ['upper'],
+      category: 'Social Sciences',
+      meta: 'Junior/Senior · Fall Term',
+      blurb: 'Quantitative and qualitative methods for serious research. Students leave able to design empirical studies for their Aries project or independent work.',
+      tags: ['writing', 'science', 'debate', 'research']
+    },
+    'intro-psych': {
+      name: 'Introduction to Psychology',
+      division: ['upper'],
+      category: 'Social Sciences',
+      meta: 'Fall Term',
+      blurb: 'Foundational principles plus four labs covering ethical frameworks, data collection, and analysis. Each unit centers on a fictional patient students learn to assist.',
+      tags: ['science', 'psychology', 'research']
+    },
+    'world-issues': {
+      name: 'Contemporary World Issues',
+      division: ['upper'],
+      category: 'Social Sciences',
+      meta: 'Spring Term',
+      blurb: 'World events as the syllabus. Civil rights, sustainability, national security, globalization — whatever\'s happening, the class is studying it.',
+      tags: ['debate', 'politics', 'leadership', 'global']
+    },
+    'food-for-thought': {
+      name: 'Food for Thought',
+      division: ['upper'],
+      category: 'Social Sciences',
+      meta: 'Spring Term',
+      blurb: 'Food history from ancient societies to modern systems. Field trips, guest chefs, hands-on cooking and gardening. Be prepared to read, research, and eat.',
+      tags: ['outdoors', 'writing', 'history', 'food']
+    },
+    'entrepreneurial': {
+      name: 'Entrepreneurial Problem Solving',
+      division: ['upper'],
+      category: 'Social Sciences',
+      meta: 'Fall Term',
+      blurb: 'Project teams take on real problems from local CEOs, government officials, and nonprofit leaders, then present solutions back to the people who asked.',
+      tags: ['leadership', 'building', 'innovation', 'entrepreneurship']
     },
 
-    // -- HUMANITIES & GLOBAL ---------------------------------------------------
-    'debate': {
-      name: 'Debate & Speech',
-      division: ['middle', 'upper'],
-      category: 'Humanities & Global',
-      blurb: 'Build the argument, defend it, then take the other side. Compete regionally.',
-      tags: ['debate', 'speaking', 'argument', 'reading', 'writing', 'logic', 'expressive']
-    },
-    'model-un': {
-      name: 'Model United Nations',
+    // -- MATHEMATICS -----------------------------------------------------------
+    'math-pathway': {
+      name: 'The Math Pathway',
       division: ['upper'],
-      category: 'Humanities & Global',
-      blurb: 'Diplomacy, research, and negotiation around real-world issues. Travel to conferences each year.',
-      tags: ['global', 'politics', 'history', 'speaking', 'travel', 'leadership', 'culture']
+      category: 'Mathematics',
+      meta: '9th–12th Grade',
+      blurb: 'From Algebra I through Multivariate Calculus, with Honors and Advanced tracks at every level. Students place into the path that challenges them.',
+      tags: ['math', 'logic']
     },
-    'literary-magazine': {
-      name: 'Literary Magazine',
-      division: ['middle', 'upper'],
-      category: 'Humanities & Global',
-      blurb: 'Student-edited publication of original poetry, fiction, and visual art.',
-      tags: ['writing', 'reading', 'poetry', 'creative', 'expressive', 'art']
+    'statistics': {
+      name: 'Statistics & Inference',
+      division: ['upper'],
+      category: 'Mathematics',
+      meta: 'Fall Term',
+      blurb: 'Sampling, experimentation, the normal model, confidence intervals. The math of how we know what we know.',
+      tags: ['math', 'science', 'statistics']
     },
-    'world-languages': {
-      name: 'World Languages',
-      division: ['middle', 'upper'],
-      category: 'Humanities & Global',
-      blurb: 'Spanish, French, and Mandarin — taught with cultural immersion alongside grammar and vocabulary.',
-      tags: ['languages', 'culture', 'global', 'travel', 'curious']
+    'probability': {
+      name: 'Probability & Game Theory',
+      division: ['upper'],
+      category: 'Mathematics',
+      meta: 'Spring Term',
+      blurb: 'Permutations, conditional probability, Bayes\' Theorem — then game theory: Nash equilibria, backward induction, and imperfect information.',
+      tags: ['math', 'logic', 'probability']
+    },
+
+    // -- COMPUTER SCIENCE ------------------------------------------------------
+    'ai-ml': {
+      name: 'AI & Machine Learning',
+      division: ['upper'],
+      category: 'Computer Science',
+      meta: 'Fall Term',
+      blurb: 'Students train their own machine-learning models — image classifiers, language tools — and engage critically with the systems shaping their world.',
+      tags: ['coding', 'robotics', 'computers', 'innovation', 'ai']
+    },
+    'robotics-team': {
+      name: 'Robotics Team',
+      division: ['upper'],
+      category: 'Computer Science',
+      meta: 'Club · "Rambotics"',
+      blurb: 'Join MVS "Rambotics" and compete against other schools. Learn to build and code as you construct your own robot to solve problems.',
+      tags: ['coding', 'robotics', 'building', 'computers', 'making', 'engineering']
+    },
+    'data-science': {
+      name: 'Data Science & Analytics',
+      division: ['upper'],
+      category: 'Computer Science',
+      meta: 'Fall Term',
+      blurb: 'From raw data to glossy infographics, students learn to clean, query, analyze, and visualize. Plus how to spot bad data analysis in the wild.',
+      tags: ['coding', 'math', 'data', 'computers']
+    },
+    'web-design': {
+      name: 'Introduction to Web Design',
+      division: ['upper'],
+      category: 'Computer Science',
+      meta: 'Spring Term',
+      blurb: 'HTML, CSS, JavaScript, Bootstrap, plus the design fundamentals — typography, color, wireframing — that separate a working site from a great one.',
+      tags: ['coding', 'art', 'design', 'computers']
+    },
+    'sci-computing': {
+      name: 'Scientific Computing',
+      division: ['upper'],
+      category: 'Computer Science',
+      meta: 'Spring Term',
+      blurb: 'Boolean logic, binary arithmetic, data structures, algorithms, cryptography, and Monte Carlo simulation. Students write the code themselves, not the demos.',
+      tags: ['coding', 'math', 'science', 'computers', 'logic']
+    },
+    'innovation': {
+      name: 'Introduction to Innovation',
+      division: ['upper'],
+      category: 'Computer Science',
+      meta: 'Fall & Spring Term',
+      blurb: 'The cycle of making — design, prototype, build — in MVS\'s new Innovation Lab. Built on the belief that everyone is an innovator.',
+      tags: ['building', 'robotics', 'making', 'innovation', 'hands-on']
+    },
+
+    // -- SCIENCE ---------------------------------------------------------------
+    'biology': {
+      name: 'Biology I',
+      division: ['upper'],
+      category: 'Science',
+      meta: '9th Grade · Year-long',
+      blurb: 'From the chemical basis of life through ecology and human impact, with weekly labs and a focus on evidence-based reasoning.',
+      tags: ['science', 'biology', 'experiments']
+    },
+    'chemistry': {
+      name: 'Chemistry I',
+      division: ['upper'],
+      category: 'Science',
+      meta: '10th Grade · Year-long',
+      blurb: 'Matter, energy, and the rules they follow. Weekly inquiry-based labs explore gas laws, stoichiometry, and thermochemistry. Honors track available.',
+      tags: ['science', 'chemistry', 'experiments']
+    },
+    'physics': {
+      name: 'Physics I',
+      division: ['upper'],
+      category: 'Science',
+      meta: '11th Grade · Year-long',
+      blurb: 'Velocity, force, acceleration, energy, momentum — built on student-developed scientific models rather than rote computation. Honors track available.',
+      tags: ['science', 'physics', 'math']
+    },
+    'anatomy': {
+      name: 'Anatomy: Body Systems',
+      division: ['upper'],
+      category: 'Science',
+      meta: 'Fall & Spring Terms',
+      blurb: 'Two semesters covering the body\'s major systems through medical case studies — disorders like cystic fibrosis, hypertension, and shock as the entry point.',
+      tags: ['science', 'biology', 'anatomy', 'medicine']
+    },
+    'soil-society': {
+      name: 'From Soil to Society',
+      division: ['upper'],
+      category: 'Science',
+      meta: 'Fall Term',
+      blurb: 'Plant biology meets food justice. Students study soil health, sustainable cultivation, food insecurity, and the policy that shapes our food systems.',
+      tags: ['outdoors', 'science', 'leadership', 'environment', 'sustainability']
+    },
+    'env-sustainability': {
+      name: 'Environmental Sustainability',
+      division: ['upper'],
+      category: 'Science',
+      meta: 'Spring Term',
+      blurb: 'Green roofs, rain gardens, urban forests, living shorelines. The natural and engineered systems already solving climate-driven problems.',
+      tags: ['outdoors', 'science', 'leadership', 'environment', 'sustainability']
+    },
+    'adv-biology': {
+      name: 'Advanced Biology II',
+      division: ['upper'],
+      category: 'Science',
+      meta: 'Advanced · Year-long',
+      blurb: 'A college-level course covering biochemistry, molecular and cellular biology, genetics, and gene regulation. Real lab work and primary data analysis.',
+      tags: ['science', 'biology', 'research']
+    },
+    'adv-chemistry': {
+      name: 'Advanced Chemistry II',
+      division: ['upper'],
+      category: 'Science',
+      meta: 'Advanced · Year-long',
+      blurb: 'Comparable to college general chemistry. Kinetics, equilibrium, intermolecular forces, acid-base, titrations. Weekly inquiry-based experiments.',
+      tags: ['science', 'chemistry', 'experiments']
+    },
+    'adv-physics': {
+      name: 'Advanced Physics II',
+      division: ['upper'],
+      category: 'Science',
+      meta: 'Advanced · Year-long',
+      blurb: 'Beyond mechanics: electrostatics, circuits, magnetism, electromagnetism, and nuclear physics. Lab investigations drive everything.',
+      tags: ['science', 'physics', 'math']
+    },
+
+    // -- WORLD LANGUAGES -------------------------------------------------------
+    'french': {
+      name: 'French',
+      division: ['upper'],
+      category: 'World Languages',
+      meta: 'I through Advanced V',
+      blurb: 'Five levels from novice to advanced. Each year includes Culture Weeks with hands-on cooking. Upper levels read Camus, Satrapi, Sebbar, and Faye.',
+      tags: ['languages', 'culture', 'global']
+    },
+    'mandarin': {
+      name: 'Mandarin',
+      division: ['upper'],
+      category: 'World Languages',
+      meta: 'I through Advanced V',
+      blurb: 'Five levels covering Pinyin, character writing, conversational fluency, and reading and writing 1,200+ simplified characters. Cultural immersion throughout.',
+      tags: ['languages', 'culture', 'global']
+    },
+    'spanish': {
+      name: 'Spanish',
+      division: ['upper'],
+      category: 'World Languages',
+      meta: 'I through Advanced V',
+      blurb: 'Five levels with a social-justice lens through the upper years. Students sign immersion pledges and explore culture through art, film, and current events.',
+      tags: ['languages', 'culture', 'global']
     },
 
     // -- ATHLETICS -------------------------------------------------------------
-    'soccer': {
-      name: 'Soccer',
-      division: ['middle', 'upper'],
+    'strength': {
+      name: 'Strength & Conditioning',
+      division: ['upper'],
       category: 'Athletics',
-      blurb: 'Boys\' and girls\' teams compete in fall and spring seasons.',
-      tags: ['sports', 'soccer', 'team', 'athletic', 'outdoor']
-    },
-    'basketball': {
-      name: 'Basketball',
-      division: ['middle', 'upper'],
-      category: 'Athletics',
-      blurb: 'Winter season for boys and girls, with a strong tradition and a competitive schedule.',
-      tags: ['sports', 'basketball', 'team', 'athletic']
-    },
-    'tennis': {
-      name: 'Tennis',
-      division: ['middle', 'upper'],
-      category: 'Athletics',
-      blurb: 'Singles and doubles competition for boys and girls.',
-      tags: ['sports', 'tennis', 'athletic', 'outdoor', 'individual']
+      meta: 'PE · Fall or Spring Term',
+      blurb: 'Cardiovascular and neuromuscular physiology meets practical training. Students learn how athletes actually develop, then apply it.',
+      tags: ['sports', 'athletic', 'fitness']
     },
     'cross-country': {
-      name: 'Cross Country & Track',
-      division: ['middle', 'upper'],
+      name: 'Boys\' and Girls\' Cross Country',
+      division: ['upper'],
       category: 'Athletics',
-      blurb: 'Distance running for athletes who want to push their own limits.',
-      tags: ['sports', 'running', 'athletic', 'outdoor', 'individual', 'endurance']
+      meta: 'Fall Season',
+      blurb: 'Lace up and run as part of MVS\' upper school cross country team, competing in OHSAA Division IV and the Metro Buckeye Conference.',
+      tags: ['sports', 'athletic', 'running', 'team', 'outdoor']
+    },
+    'girls-tennis': {
+      name: 'Girls\' Tennis',
+      division: ['upper'],
+      category: 'Athletics',
+      meta: 'Fall Season',
+      blurb: 'Serve an ace as part of the MVS girls\' tennis program, competing in OHSAA Division II.',
+      tags: ['sports', 'athletic', 'tennis', 'individual']
     },
     'volleyball': {
-      name: 'Volleyball',
-      division: ['middle', 'upper'],
+      name: 'Girls\' Volleyball',
+      division: ['upper'],
       category: 'Athletics',
-      blurb: 'Competitive girls\' fall season with a tight-knit team culture.',
-      tags: ['sports', 'volleyball', 'team', 'athletic']
+      meta: 'Fall Season',
+      blurb: 'Bump, set, and spike as part of the MVS upper school girls\' volleyball team, competing in OHSAA Division VII.',
+      tags: ['sports', 'athletic', 'volleyball', 'team']
     },
-    'lower-pe': {
-      name: 'Movement & PE',
-      division: ['lower-early', 'lower'],
+    'boys-soccer': {
+      name: 'Boys\' Soccer',
+      division: ['upper'],
       category: 'Athletics',
-      blurb: 'Daily movement, games, and skill-building that introduce the joy of sport early.',
-      tags: ['sports', 'athletic', 'active', 'outdoor', 'team']
+      meta: 'Fall Season',
+      blurb: 'Score a goal with MVS\' upper school boys\' soccer team, competing in OHSAA Division V and the Metro Buckeye Conference.',
+      tags: ['sports', 'athletic', 'soccer', 'team', 'outdoor']
+    },
+    'swimming': {
+      name: 'Boys\' and Girls\' Swimming',
+      division: ['upper'],
+      category: 'Athletics',
+      meta: 'Winter Season',
+      blurb: 'Make a splash as part of MVS\' upper school swim program, competing in OHSAA Division II and the Metro Buckeye Conference.',
+      tags: ['sports', 'athletic', 'swimming', 'team']
+    },
+    'boys-basketball': {
+      name: 'Boys\' Basketball',
+      division: ['upper'],
+      category: 'Athletics',
+      meta: 'Winter Season',
+      blurb: 'Drive to the hoop with the MVS upper school boys\' basketball team, competing in OHSAA Division VI and the Metro Buckeye Conference.',
+      tags: ['sports', 'athletic', 'basketball', 'team']
+    },
+    'girls-basketball': {
+      name: 'Girls\' Basketball',
+      division: ['upper'],
+      category: 'Athletics',
+      meta: 'Winter Season',
+      blurb: 'Drive to the hoop with the MVS upper school girls\' basketball team, competing in OHSAA Division VII and the Metro Buckeye Conference.',
+      tags: ['sports', 'athletic', 'basketball', 'team']
+    },
+    'track': {
+      name: 'Boys\' and Girls\' Track and Field',
+      division: ['upper'],
+      category: 'Athletics',
+      meta: 'Spring Season',
+      blurb: 'Go faster, higher, and stronger as part of the MVS upper school track program, competing in OHSAA Division V and the Metro Buckeye Conference. MVS track athletes have won nine individual state championships.',
+      tags: ['sports', 'athletic', 'running', 'team', 'outdoor']
+    },
+    'boys-tennis': {
+      name: 'Boys\' Tennis',
+      division: ['upper'],
+      category: 'Athletics',
+      meta: 'Spring Season',
+      blurb: 'Serve an ace as part of the MVS upper school boys\' tennis team, competing in OHSAA Division II and the Metro Buckeye Conference.',
+      tags: ['sports', 'athletic', 'tennis', 'individual']
     },
 
-    // -- OUTDOOR & ENVIRONMENTAL -----------------------------------------------
-    'outdoor-classroom': {
-      name: 'Outdoor Classroom',
-      division: ['lower-early', 'lower'],
-      category: 'Outdoor & Environmental',
-      blurb: 'Our 32-acre campus is a teaching tool. Lessons regularly move outside — into the woods, garden, and pond.',
-      tags: ['nature', 'outdoor', 'animals', 'plants', 'environment', 'science', 'active']
+    // -- ELECTIVE LEARNING -----------------------------------------------------
+    'student-teaching': {
+      name: 'Student Assistant Teaching',
+      division: ['upper'],
+      category: 'Elective Learning',
+      meta: 'Senior Elective · Fall or Spring',
+      blurb: 'Seniors work alongside MVS faculty in classrooms across the school — shadowing professionals, mentoring younger students, and serving as role models.',
+      tags: ['leadership', 'teaching', 'service']
     },
-    'environmental-club': {
-      name: 'Environmental Club',
-      division: ['middle', 'upper'],
-      category: 'Outdoor & Environmental',
-      blurb: 'Student-led sustainability work on campus and in the community.',
-      tags: ['environment', 'nature', 'service', 'leadership', 'global']
-    },
-
-    // -- LEADERSHIP & SERVICE --------------------------------------------------
-    'student-government': {
-      name: 'Student Government',
-      division: ['middle', 'upper'],
-      category: 'Leadership & Service',
-      blurb: 'Real responsibility, real budgets, real decisions. Students lead student life.',
-      tags: ['leadership', 'speaking', 'service', 'community']
-    },
-    'service-learning': {
-      name: 'Service Learning',
-      division: ['lower', 'middle', 'upper'],
-      category: 'Leadership & Service',
-      blurb: 'Embedded community partnerships across all divisions. Service is part of how we learn, not an add-on.',
-      tags: ['service', 'community', 'helping', 'leadership', 'global']
+    'learning-project': {
+      name: 'Learning Project',
+      division: ['upper'],
+      category: 'Elective Learning',
+      meta: 'Sophomore–Senior · Spring Term',
+      blurb: 'Two courses in one: deep immersion in a topic of your choosing, plus learning the structure of how to design and lead your own learning experience.',
+      tags: ['writing', 'leadership', 'research', 'independent']
     }
   };
 
   // ============================================================================
-  // INTEREST CHIPS shown in the form. These are the broad categories most
-  // parents recognize. Each maps to one or more matching tags in the database.
+  // INTEREST CHIPS shown in the form. Each maps to one or more matching tags.
   // ============================================================================
   const INTEREST_CHIPS = [
-    { label: 'Art & Design', tags: ['art', 'drawing', 'painting', 'design', 'creative', 'visual'] },
-    { label: 'Music', tags: ['music', 'singing', 'instruments'] },
-    { label: 'Theater & Performance', tags: ['theater', 'drama', 'performance', 'expressive'] },
-    { label: 'Reading & Writing', tags: ['reading', 'writing', 'poetry'] },
-    { label: 'Math & Logic', tags: ['math', 'logic', 'puzzles', 'problem-solving'] },
-    { label: 'Science & Discovery', tags: ['science', 'experiments', 'curious', 'biology', 'chemistry', 'physics'] },
-    { label: 'Building & Making', tags: ['building', 'making', 'hands-on', 'taking-apart', 'inventing'] },
-    { label: 'Coding & Computers', tags: ['coding', 'computers', 'programming', 'digital'] },
-    { label: 'Robotics & Engineering', tags: ['robotics', 'engineering', 'building', 'inventing'] },
-    { label: 'Sports & Athletics', tags: ['sports', 'athletic', 'team', 'active'] },
-    { label: 'Outdoors & Nature', tags: ['outdoor', 'nature', 'animals', 'environment', 'plants'] },
+    { label: 'Art & Design', tags: ['art', 'drawing', 'painting', 'design', 'creative', 'visual', 'ceramics', 'sculpture'] },
+    { label: 'Music', tags: ['music', 'singing', 'instruments', 'guitar', 'choir', 'band', 'orchestra'] },
+    { label: 'Theater & Performance', tags: ['theater', 'drama', 'performance', 'acting', 'expressive', 'musical'] },
+    { label: 'Reading & Writing', tags: ['reading', 'writing', 'literature', 'poetry'] },
+    { label: 'Math & Logic', tags: ['math', 'logic', 'probability', 'statistics'] },
+    { label: 'Science & Discovery', tags: ['science', 'biology', 'chemistry', 'physics', 'anatomy', 'experiments', 'research', 'medicine'] },
+    { label: 'Building & Making', tags: ['building', 'making', 'hands-on', 'engineering'] },
+    { label: 'Coding & Computers', tags: ['coding', 'computers', 'data'] },
+    { label: 'AI, Robotics & Innovation', tags: ['ai', 'robotics', 'innovation'] },
+    { label: 'Sports & Athletics', tags: ['sports', 'athletic', 'fitness', 'running', 'tennis', 'basketball', 'soccer', 'volleyball', 'swimming'] },
+    { label: 'Outdoors & Nature', tags: ['outdoors', 'nature', 'environment', 'sustainability', 'plants'] },
     { label: 'Languages & Culture', tags: ['languages', 'culture', 'global', 'travel'] },
-    { label: 'Debate & Public Speaking', tags: ['debate', 'speaking', 'argument'] },
-    { label: 'Leadership & Service', tags: ['leadership', 'service', 'community', 'helping'] }
+    { label: 'Social Science & Politics', tags: ['debate', 'politics', 'history', 'speaking'] },
+    { label: 'Leadership & Service', tags: ['leadership', 'service', 'teaching', 'entrepreneurship'] }
   ];
 
   // ============================================================================
@@ -1262,12 +1527,6 @@
 
   // ============================================================================
   // MATCHING ENGINE
-  // ----------------------------------------------------------------------------
-  // Score each program by:
-  //   - Tag overlap with selected chips (weight: 3)
-  //   - Tag overlap with words in free text (weight: 1)
-  //   - Division match (filter — must match grade band)
-  //   - Bonus for signature programs that have any match (weight: +1)
   // ============================================================================
   function matchPrograms() {
     const collectedTags = new Set();
@@ -1275,7 +1534,6 @@
       INTEREST_CHIPS[idx].tags.forEach(function(t) { collectedTags.add(t); });
     });
 
-    // Tokenize free text into simple keywords
     const freetextWords = state.freetext
       .toLowerCase()
       .replace(/[^a-z\s-]/g, ' ')
@@ -1287,15 +1545,11 @@
       const p = MVS_PROGRAMS[id];
       const divisions = Array.isArray(p.division) ? p.division : [p.division];
 
-      // Filter: must match the selected grade band
       if (state.grade && divisions.indexOf(state.grade) === -1) return;
 
       let score = 0;
-
-      // Score from chip tags
       p.tags.forEach(function(tag) {
         if (collectedTags.has(tag)) score += 3;
-        // Partial token match in free text
         freetextWords.forEach(function(word) {
           if (tag.indexOf(word) !== -1 || word.indexOf(tag) !== -1) {
             score += 1;
@@ -1303,7 +1557,6 @@
         });
       });
 
-      // Signature bonus
       if (p.signature && score > 0) score += 1;
 
       if (score > 0) {
@@ -1329,7 +1582,6 @@
       }
       groups[cat].push(r);
     });
-    // Move "Signature MVS Programs" to the front if present
     const sigIdx = order.indexOf('Signature MVS Programs');
     if (sigIdx > 0) {
       order.splice(sigIdx, 1);
@@ -1339,7 +1591,7 @@
   }
 
   // ============================================================================
-  // FALLBACK NARRATIVE (used if API call fails or is unavailable)
+  // FALLBACK NARRATIVE
   // ============================================================================
   function buildFallbackNarrative(results) {
     const name = state.name || 'your child';
@@ -1366,7 +1618,7 @@
     } else {
       p1 = 'Here\'s a starting point for ' + name + ' at MVS. ';
     }
-    p1 += 'These are real programs, classes, and activities — not a brochure list.';
+    p1 += 'These are real courses, programs, and activities — not a brochure list.';
 
     const p2 = 'At MVS, interests don\'t stay in their lane. ' + childRef + ' might start in one place and end up somewhere ' + childRefLower + ' didn\'t expect. That\'s the point.';
 
@@ -1375,11 +1627,6 @@
 
   // ============================================================================
   // CLAUDE API NARRATIVE (optional enhancement)
-  // ----------------------------------------------------------------------------
-  // Sends the matched programs to Claude and asks for a 2-3 sentence
-  // personalized narrative in MVS brand voice. Falls back to template
-  // if the API is unavailable (e.g. when embedded on a static site
-  // without a backend proxy).
   // ============================================================================
   async function generateNarrative(results) {
     try {
@@ -1392,23 +1639,16 @@
         return '- ' + r.program.name + ': ' + r.program.blurb;
       }).join('\n');
 
-      const gradeLabels = {
-        'lower-early': 'Pre-K through Kindergarten',
-        'lower': '1st through 5th grade',
-        'middle': '6th through 8th grade',
-        'upper': '9th through 12th grade'
-      };
-
-      const prompt = 'You are writing a personalized welcome paragraph for a prospective family at The Miami Valley School (MVS), a private K-12 school in Dayton, Ohio. The brand voice is warm, confident, adventurous, and direct — never stuffy. The tagline is "Here, they become."\n\n' +
+      const prompt = 'You are writing a personalized welcome paragraph for a prospective family at The Miami Valley School (MVS), a private K-12 school in Dayton, Ohio. The brand voice is warm, confident, adventurous, and direct — never stuffy.\n\n' +
         'CHILD CONTEXT:\n' +
         '- Name: ' + (state.name || '(not provided — use "your child" or "they")') + '\n' +
-        '- Grade band: ' + (gradeLabels[state.grade] || 'unspecified') + '\n' +
+        '- Grade band: Upper School (9th–12th grade)\n' +
         '- Interests selected: ' + (interestLabels.join(', ') || 'none specified') + '\n' +
         '- Additional notes from parent: ' + (state.freetext || '(none)') + '\n\n' +
         'TOP MATCHED PROGRAMS (these are real — do NOT invent others):\n' + topPrograms + '\n\n' +
         'Write 2 short paragraphs (3 sentences each, max) that:\n' +
         '1. Speak directly to the parent about what their child could do at MVS, referencing their actual interests and 1-2 of the matched programs by name.\n' +
-        '2. End with something that captures the spirit of "becoming" — what the experience does for a kid, not just what programs exist.\n\n' +
+        '2. End with something that captures the spirit of becoming — what the experience does for a kid, not just what programs exist.\n\n' +
         'Rules: Use "you/your" and the child\'s name (or "they" if no name). Active voice. Short sentences. No exclamation points. No clichés like "unleash potential" or "ignite passion." Don\'t mention programs that aren\'t in the list above. Return ONLY the two paragraphs as plain text, separated by a blank line. No headers, no markdown.';
 
       const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -1432,7 +1672,6 @@
 
       if (!text) throw new Error('Empty response');
 
-      // Split into paragraphs
       return text.split(/\n\s*\n/).filter(function(p) { return p.trim().length > 0; });
     } catch (err) {
       console.warn('[BYP] Falling back to templated narrative:', err.message);
@@ -1479,19 +1718,10 @@
         const card = document.createElement('div');
         card.className = 'byp-program-card' + (r.program.signature ? ' signature' : '');
 
-        const divisions = Array.isArray(r.program.division) ? r.program.division : [r.program.division];
-        const divisionLabels = {
-          'lower-early': 'Pre-K–K',
-          'lower': 'Lower School',
-          'middle': 'Middle School',
-          'upper': 'Upper School'
-        };
-        const divLabel = divisions.length > 2
-          ? 'All Divisions'
-          : divisions.map(function(d) { return divisionLabels[d]; }).join(' • ');
+        const metaLabel = r.program.meta || cat;
 
         card.innerHTML =
-          '<p class="byp-program-meta">' + divLabel + (r.program.signature ? ' · Signature Program' : '') + '</p>' +
+          '<p class="byp-program-meta">' + metaLabel + (r.program.signature ? ' · Signature Program' : '') + '</p>' +
           '<h4 class="byp-program-name">' + r.program.name + '</h4>' +
           '<p class="byp-program-blurb">' + r.program.blurb + '</p>';
 
@@ -1504,13 +1734,31 @@
   }
 
   // ============================================================================
+  // IFRAME-AWARE SCROLLING
+  // ============================================================================
+  function smoothScrollTo(elementId) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+
+    if (window.parent === window) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+
+    const offsetY = el.getBoundingClientRect().top + window.scrollY;
+    window.parent.postMessage({ type: 'mvs-byp-scroll', offsetY: offsetY }, '*');
+  }
+
+  // ============================================================================
   // SUBMIT FLOW
   // ============================================================================
+  let lastResults = [];
+  let lastNarrative = [];
+
   document.getElementById('byp-submit').addEventListener('click', async function() {
     const errorEl = document.getElementById('byp-error');
     errorEl.classList.remove('visible');
 
-    // Validate
     if (!state.grade) {
       errorEl.textContent = 'Please select a grade level so we can match the right programs.';
       errorEl.classList.add('visible');
@@ -1525,15 +1773,12 @@
     const submitBtn = document.getElementById('byp-submit');
     submitBtn.disabled = true;
 
-    // Show loading
     document.getElementById('byp-loading').classList.add('visible');
     document.getElementById('byp-results').classList.remove('visible');
 
-    // Match
     const results = matchPrograms();
 
     if (results.length === 0) {
-      // No matches — try without grade filter
       document.getElementById('byp-loading').classList.remove('visible');
       errorEl.textContent = 'We couldn\'t find a match for that combination. Try selecting different interests, or contact admissions to chat about a custom path.';
       errorEl.classList.add('visible');
@@ -1541,25 +1786,20 @@
       return;
     }
 
-    // Generate narrative (async, may use API)
     const narrativeParas = await generateNarrative(results);
 
-    // Capture for lead submission context
     lastResults = results;
     lastNarrative = narrativeParas;
 
-    // Render
     renderResults(results, narrativeParas);
 
-    // Swap visibility
     document.getElementById('byp-loading').classList.remove('visible');
     document.getElementById('byp-results').classList.add('visible');
     document.getElementById('byp-reset').style.display = 'inline-block';
     submitBtn.disabled = false;
 
-    // Smooth scroll to results
     setTimeout(function() {
-      document.getElementById('byp-results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      smoothScrollTo('byp-results');
     }, 100);
   });
 
@@ -1578,7 +1818,6 @@
       el.classList.remove('active');
       el.setAttribute('aria-pressed', 'false');
     });
-    // Reset lead form
     document.getElementById('byp-parent-name').value = '';
     document.getElementById('byp-parent-email').value = '';
     document.getElementById('byp-parent-phone').value = '';
@@ -1596,41 +1835,19 @@
     document.getElementById('byp-results').classList.remove('visible');
     document.getElementById('byp-error').classList.remove('visible');
     this.style.display = 'none';
-    document.getElementById('mvs-build-your-path').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    smoothScrollTo('mvs-build-your-path');
   });
 
   // ============================================================================
   // LEAD CAPTURE
   // ----------------------------------------------------------------------------
-  // CONFIGURATION:
-  // Set `endpoint` to a URL that accepts POST requests with JSON. Compatible
-  // with Zapier webhooks, Make.com, n8n, Formspree, custom backends — anything
-  // that accepts POST + JSON. From there, route to Slack, Salesforce, your CRM,
-  // Veracross, Blackbaud, email, etc.
-  //
-  // POST body shape:
-  //   {
-  //     parent: { name, email, phone, contactPreference, message },
-  //     child:  { name, gradeBand, interests, additionalInterests },
-  //     matchedPrograms: [ { id, name, category, division } ],
-  //     narrative: [ "paragraph 1", "paragraph 2" ],
-  //     submittedAt: "ISO timestamp",
-  //     source: "Build Your Path"
-  //   }
-  //
-  // If `endpoint` is null, falls back to opening the user's email client
-  // (mailto:) addressed to `fallbackEmail` with all the data formatted in the
-  // body. Good for quick deployments with no backend, but requires the parent
-  // to confirm sending from their own email app.
+  // Set endpoint to a URL that accepts POST + JSON. Compatible with Zapier,
+  // Make.com, Formspree, custom backends, etc. Leave null for mailto fallback.
   // ============================================================================
   const LEAD_CONFIG = {
-    endpoint: null, // e.g. 'https://hooks.zapier.com/hooks/catch/XXXX/YYYY/'
+    endpoint: null,
     fallbackEmail: 'admissions@mvschool.com'
   };
-
-  // Captured at render time so the lead submission has full context
-  let lastResults = [];
-  let lastNarrative = [];
 
   function isValidEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -1646,9 +1863,7 @@
     lines.push('  Email: ' + data.parent.email);
     if (data.parent.phone) lines.push('  Phone: ' + data.parent.phone);
     lines.push('  Preferred contact: ' + data.parent.contactPreference);
-    if (data.parent.message) {
-      lines.push('  Message: ' + data.parent.message);
-    }
+    if (data.parent.message) lines.push('  Message: ' + data.parent.message);
     lines.push('');
     lines.push('CHILD');
     if (data.child.name) lines.push('  Name: ' + data.child.name);
@@ -1677,7 +1892,6 @@
       if (!response.ok) throw new Error('HTTP ' + response.status);
       return;
     }
-    // Mailto fallback
     const subject = encodeURIComponent('New Build Your Path Submission — ' + data.parent.name);
     const body = encodeURIComponent(formatLeadEmail(data));
     window.location.href = 'mailto:' + LEAD_CONFIG.fallbackEmail + '?subject=' + subject + '&body=' + body;
@@ -1705,9 +1919,6 @@
     }
 
     const gradeLabels = {
-      'lower-early': 'Pre-K through Kindergarten',
-      'lower': '1st through 5th Grade',
-      'middle': '6th through 8th Grade',
       'upper': '9th through 12th Grade'
     };
 
@@ -1734,8 +1945,7 @@
         return {
           id: r.id,
           name: r.program.name,
-          category: r.program.category,
-          division: Array.isArray(r.program.division) ? r.program.division.join(', ') : r.program.division
+          category: r.program.category
         };
       }),
       narrative: lastNarrative,
@@ -1752,7 +1962,7 @@
       await submitLead(leadData);
       document.getElementById('byp-lead-form-wrap').classList.add('hidden');
       document.getElementById('byp-lead-success').classList.add('visible');
-      document.getElementById('byp-lead-success').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      smoothScrollTo('byp-lead-success');
     } catch (err) {
       console.error('[BYP] Lead submission failed:', err);
       errorEl.textContent = 'Something went wrong sending your path. Please try again, or email us directly at ' + LEAD_CONFIG.fallbackEmail + '.';
@@ -1769,18 +1979,9 @@
 
   // ============================================================================
   // IFRAME AUTO-RESIZE
-  // ----------------------------------------------------------------------------
-  // When this widget is loaded inside an iframe, post the document's current
-  // height to the parent window whenever the content changes. The parent page
-  // listens for these messages and resizes the iframe accordingly. See the
-  // embed snippet in the project README for the parent-side listener code.
-  //
-  // Using '*' as the target origin is safe here since height is non-sensitive.
-  // Lock it down to your domain (e.g. 'https://www.mvschool.com') if you want
-  // to be strict about it.
   // ============================================================================
   function postHeight() {
-    if (window.parent === window) return; // Not in an iframe; do nothing
+    if (window.parent === window) return;
     const height = document.documentElement.scrollHeight;
     window.parent.postMessage({ type: 'mvs-byp-height', height: height }, '*');
   }
@@ -1789,10 +1990,8 @@
     const ro = new ResizeObserver(postHeight);
     ro.observe(document.documentElement);
   } else {
-    // Fallback for older browsers: poll every 500ms
     setInterval(postHeight, 500);
   }
-  // Initial post + one after fonts load (Fraunces shifts layout slightly)
   postHeight();
   if (document.fonts && document.fonts.ready) {
     document.fonts.ready.then(postHeight);
